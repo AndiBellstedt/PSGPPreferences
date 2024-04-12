@@ -1,8 +1,11 @@
 function Serialize-GPPSection {
     Param (
-        [Parameter(Mandatory)]
-        [GPPSection]$InputObject,
-        [switch]$IncludeType
+        [Parameter(Mandatory = $true)]
+        [GPPSection]
+        $InputObject,
+
+        [switch]
+        $IncludeType
     )
 
     switch ($InputObject.GetType().FullName) {
@@ -17,8 +20,7 @@ function Serialize-GPPSection {
             XMLDocument = $XMLDocument
             Type        = $Type
         }
-    }
-    else {
+    } else {
         $XMLDocument
     }
 }

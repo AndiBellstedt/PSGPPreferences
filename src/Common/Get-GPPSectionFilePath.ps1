@@ -1,26 +1,40 @@
 function Get-GPPSectionFilePath {
     Param (
-        [Parameter(Mandatory)]
-        [guid]$GPOId,
-        [Parameter(Mandatory)]
-        [GPPContext]$Context,
-        [Parameter(Mandatory)]
-        [GPPType]$Type,
-        [switch]$Extended
+        [Parameter(Mandatory = $true)]
+        [guid]
+        $GPOId,
+
+        [Parameter(Mandatory = $true)]
+        [GPPContext]
+        $Context,
+
+        [Parameter(Mandatory = $true)]
+        [GPPType]
+        $Type,
+
+        [string]
+        $DomainName,
+
+        [switch]
+        $Extended
     )
 
-    $PolicyPath = Get-GPOFilePath -Id $GPOId
-    $ContextPath = Join-Path -Path $PolicyPath -ChildPath ('{0}\Preferences' -f $Context)
-    $FolderPath = Join-Path -Path $ContextPath -ChildPath $Type
-    $FilePath = Join-Path -Path $FolderPath -ChildPath ('{0}.xml' -f $Type)
+    if ($DomainName) {
+        $policyPath = Get-GPOFilePath -Id $GPOId -DomainName $DomainName
+    } else {
+        $policyPath = Get-GPOFilePath -Id $GPOId
+    }
+
+    $contextPath = Join-Path -Path $policyPath -ChildPath ('{0}\Preferences' -f $Context)
+    $folderPath = Join-Path -Path $contextPath -ChildPath $Type
+    $filePath = Join-Path -Path $folderPath -ChildPath ('{0}.xml' -f $Type)
 
     if ($Extended) {
         @{
-            FolderPath = $FolderPath
-            FilePath = $FilePath
+            FolderPath = $folderPath
+            FilePath   = $filePath
         }
-    }
-    else {
-        $FilePath
+    } else {
+        $filePath
     }
 }

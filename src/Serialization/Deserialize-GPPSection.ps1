@@ -1,7 +1,8 @@
 function Deserialize-GPPSection {
     Param (
-        [Parameter(Mandatory)]
-        [xml]$InputObject
+        [Parameter(Mandatory = $true)]
+        [xml]
+        $InputObject
     )
 
     $RootElement = $InputObject.DocumentElement

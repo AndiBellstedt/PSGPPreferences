@@ -1,14 +1,27 @@
 function Update-GPOVersion {
     Param (
-        [Parameter(Mandatory)]
-        [guid]$Id
+        [Parameter(Mandatory = $true)]
+        [guid]
+        $Id,
+
+        [string]
+        $DomainName
     )
 
-    $GPO = Get-GPOObject -Id $Id
-    $GPOVersionNumber = $GPO.versionNumber[0] # System.DirectoryServices.PropertyValueCollection, that's why we have to access the first element
-    $GPOVersionNumber++
-    $GPO.versionNumber[0] = $GPOVersionNumber
-    $GPO.CommitChanges()
+    if ($DomainName) {
+        $gpoItem = Get-GPOObject -Id $Id -DomainName $DomainName
+    } else {
+        $gpoItem = Get-GPOObject -Id $Id
+    }
 
-    Update-GPOFileVersion -Id $Id -Version $GPOVersionNumber
+    [int]$gpoVersionNumber = $gpo.versionNumber | Select-Object -First 1 # System.DirectoryServices.PropertyValueCollection, that's why we have to access the first element
+    $gpoVersionNumber++
+    $gpoItem.versionNumber = $GPOVersionNumber
+    $gpoItem.CommitChanges()
+
+    if ($DomainName) {
+        Update-GPOFileVersion -Id $Id -Version $GPOVersionNumber -DomainName $DomainName
+    } else {
+        Update-GPOFileVersion -Id $Id -Version $GPOVersionNumber
+    }
 }

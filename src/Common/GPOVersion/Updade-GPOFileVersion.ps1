@@ -1,19 +1,30 @@
 function Update-GPOFileVersion {
     Param (
-        [Parameter(Mandatory)]
-        [guid]$Id,
-        [Parameter(Mandatory)]
-        [int]$Version
+        [Parameter(Mandatory = $true)]
+        [guid]
+        $Id,
+
+        [Parameter(Mandatory = $true)]
+        [int]
+        $Version,
+
+        [string]
+        $DomainName
     )
 
-    $Domain = [System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain()
-    $DomainDnsName = $Domain.Name
+    if ($DomainName) {
+        $domain = [System.DirectoryServices.ActiveDirectory.Domain]::GetDomain(
+            [System.DirectoryServices.ActiveDirectory.DirectoryContext]::new( [System.DirectoryServices.ActiveDirectory.DirectoryContextType]::Domain , $DomainName )
+        )
+    } else {
+        $domain = [System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain()
+    }
+    $domainDnsName = $domain.Name
 
-    $IdFormatted = $Id.ToString('B')
-    $GPOFSPath = '\\{0}\SYSVOL\{0}\Policies\{1}' -f $DomainDnsName, $IdFormatted
-    $GPTIniPath = Join-Path -Path $GPOFSPath -ChildPath 'GPT.INI'
-    $Value = '[General]
-Version={0}' -f $GPOVersionNumber # GPO AD DS version is more important than the version in the file
+    $idFormatted = $Id.ToString('B')
+    $gpoFSPath = '\\{0}\SYSVOL\{0}\Policies\{1}' -f $domainDnsName, $idFormatted
+    $gptIniPath = Join-Path -Path $gpoFSPath -ChildPath 'GPT.INI'
+    $fileContent = "[General]`nVersion={0}" -f $Version # GPO AD DS version is more important than the version in the file
 
-    Set-Content -Path $GPTIniPath -Value $Value
+    Set-Content -Path $gptIniPath -Value $fileContent
 }

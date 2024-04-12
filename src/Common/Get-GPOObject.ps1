@@ -1,13 +1,27 @@
 function Get-GPOObject {
     Param (
-        [Parameter(Mandatory)]
-        [guid]$Id
+        [Parameter(Mandatory = $true)]
+        [guid]
+        $Id,
+
+        [string]
+        $DomainName
     )
 
-    $IdFormatted = $Id.ToString('B')
-    $RootDSE = ([System.DirectoryServices.DirectoryEntry]::new('LDAP://RootDSE'))
-    $DomainDN = $RootDSE.defaultNamingContext
-    $GPOLDAPPath = 'LDAP://CN={0},CN=Policies,CN=System,{1}' -f $IdFormatted, $DomainDN[0] # $DomainDN is a collection of a System.DirectoryServices.ResultPropertyValueCollection type with a single element inside it
+    if ($DomainName) {
+        $domainDN = ([System.DirectoryServices.DirectoryEntry]::new("LDAP://$($DomainName)")).DistinguishedName
+    } else {
+        $domainDN = ([System.DirectoryServices.DirectoryEntry]::new("LDAP://RootDSE")).defaultNamingContext
+    }
 
-    ([System.DirectoryServices.DirectoryEntry]::new($GPOLDAPPath))
+    $idFormatted = $Id.ToString('B')
+    #$gpoLdapPath = 'LDAP://CN={0},CN=Policies,CN=System,{1}' -f $idFormatted, $domainDN
+    $adsiSearcher = [adsisearcher]::new(
+        [adsi]"LDAP://CN=Policies,CN=System,$($domainDN)",
+        "(cn=$($idFormatted))"
+    )
+    $output = $adsiSearcher.FindOne()
+    $output.GetDirectoryEntry()
+    #$gpo = $output
+    #[System.DirectoryServices.DirectoryEntry]::new($gpoLdapPath)
 }

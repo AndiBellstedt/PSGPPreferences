@@ -1,38 +1,54 @@
 function Update-GPOCSE {
     Param (
-        [Parameter(Mandatory)]
-        [guid]$Id,
-        [Parameter(Mandatory)]
-        [GPPType]$Type,
-        [switch]$Remove
+        [Parameter(Mandatory = $true)]
+        [guid]
+        $Id,
+
+        [Parameter(Mandatory = $true)]
+        [GPPType]
+        $Type,
+
+        [string]
+        $DomainName,
+
+        [switch]
+        $Remove
     )
 
-    $NotContains = $false
+    $notContains = $false
 
-    $EnabledCSEs = Get-GPOCSE -Id $Id
-    $CurrentCSESet = [GPPCSE]::GetCseSetByType($Type)
-    if ($EnabledCSEs) {
-        if ($EnabledCSEs.CSE -notcontains $CurrentCSESet.CSE) {
-            $NotContains = $true
+    if ($DomainName) {
+        $enabledCSEs = Get-GPOCSE -Id $Id -DomainName $DomainName
+    } else {
+        $enabledCSEs = Get-GPOCSE -Id $Id
+    }
+
+    $currentCSESet = [GPPCSE]::GetCseSetByType($Type)
+    if ($enabledCSEs) {
+        if ($enabledCSEs.CSE -notcontains $currentCSESet.CSE) { $notContains = $true }
+    } else {
+        $notContains = $true
+    }
+
+    $cseAttribute = $null
+    if ($notContains -and -not $Remove) {
+        $cseAttribute = [GPOExtensionNamesAttribute]::new($currentCSESet)
+
+        [void]$cseAttribute.Members.Add($enabledCSEs)
+    } elseif (-not $notContains -and $Remove) {
+        $cseAttribute = [GPOExtensionNamesAttribute]::new($enabledCSEs)
+        $MemberToRemove = $cseAttribute.Members | Where-Object -FilterScript { $_.CSE -eq $currentCSESet.CSE }
+
+        [void]$cseAttribute.Members.Remove($MemberToRemove)
+    }
+
+    if ($cseAttribute) {
+        $cseAttributeString = $cseAttribute.ToString()
+
+        if ($DomainName) {
+            Set-GPOCSE -Id $Id -Value $cseAttributeString -DomainName $DomainName
+        } else {
+            Set-GPOCSE -Id $Id -Value $cseAttributeString
         }
-    }
-    else {
-        $NotContains = $true
-    }
-
-    $CSEAttribute = $null
-    if ($NotContains -and -not $Remove) {
-        $CSEAttribute = [GPOExtensionNamesAttribute]::new($CurrentCSESet)
-        [void]$CSEAttribute.Members.Add($EnabledCSEs)
-    }
-    elseif (-not $NotContains -and $Remove) {
-        $CSEAttribute = [GPOExtensionNamesAttribute]::new($EnabledCSEs)
-        $MemberToRemove = $CSEAttribute.Members | Where-Object -FilterScript {$_.CSE -eq $CurrentCSESet.CSE}
-        [void]$CSEAttribute.Members.Remove($MemberToRemove)
-    }
-
-    if ($CSEAttribute) {
-        $CSEAttributeString = $CSEAttribute.ToString()
-        Set-GPOCSE -Id $Id -Value $CSEAttributeString
     }
 }

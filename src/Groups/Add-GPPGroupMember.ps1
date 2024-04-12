@@ -1,72 +1,146 @@
 function Add-GPPGroupMember {
+    <#
+    .SYNOPSIS
+        Adds a member into a group already existing in a GPO object.
+
+    .DESCRIPTION
+        Adds a member into a group already existing in a GPO object.
+        Use New-GPPGroupMember to create group members
+
+    .PARAMETER InputObject
+        Specifies a member object to add.
+        Use New-GPPGroupMember to create one.
+
+        This parameter is mandatory and can be specified by either name, SID, or UID.
+
+    .PARAMETER GroupName
+        Specifies the name of a target group.
+
+        This parameter is mandatory when specifying the GPP group member by name.
+
+    .PARAMETER GroupSID
+        Specifies the SID of a target group.
+
+        This parameter is mandatory when specifying the GPP group member by SID.
+
+    .PARAMETER GroupUID
+        Specifies the UID of a target group. UID is a unique identifier of an object in GPP.
+        You can have several groups with the same Name/SID combination in the same
+        Group Policy object - those groups will have different UIDs. You may get a UID of
+        a group by looking at its "uid" property.
+
+        This parameter is mandatory when specifying the GPP group member by UID.
+
+    .PARAMETER GPOName
+        Specifies the name of a GPO where the target group is.
+
+        This parameter is mandatory when specifying the GPP group member by name or SID or UID.
+
+    .PARAMETER GPOId
+        Specifies the ID of a GPO where the target group is.
+        It is a name of a Group Policy's object in Active Directory.
+        Look into a CN=Policies,CN=System container in your AD DS domain
+
+        This parameter is mandatory when specifying the GPP group member by name or SID or UID.
+
+    .PARAMETER Context
+        Specifies which Group Policy context to use: Machine or User.
+        Doesn't do anything right now, since the User one has not yet been implemented.
+
+    .PARAMETER DomainName
+        The name of the domain where the GPO resides. This parameter is optional.
+
+    .EXAMPLE
+        PS C:\> $member = New-GPPItemGroupMember -Name "TestMember"
+        PS C:\> Add-GPPGroupMember -InputObject $member -GroupName "TestGroup" -GPOName "TestGPO"
+
+        This example creates a new GPP group member named "TestMember" and adds it to a group named "TestGroup" in a GPO named "TestGPO".
+    #>
+    [CmdletBinding()]
     [OutputType([System.Void])]
     Param (
-        [Parameter(ParameterSetName = 'ByGPONameGroupName', Mandatory)]
-        [Parameter(ParameterSetName = 'ByGPOIdGroupName', Mandatory)]
-        [Parameter(ParameterSetName = 'ByGPONameGroupSID', Mandatory)]
-        [Parameter(ParameterSetName = 'ByGPOIdGroupSID', Mandatory)]
-        [Parameter(ParameterSetName = 'ByGPONameGroupUID', Mandatory)]
-        [Parameter(ParameterSetName = 'ByGPOIdGroupUID', Mandatory)]
-        [GPPItemGroupMember]$InputObject,
-        [Parameter(ParameterSetName = 'ByGPONameGroupName', Mandatory)]
-        [Parameter(ParameterSetName = 'ByGPOIdGroupName', Mandatory)]
-        [string]$GroupName,
-        [Parameter(ParameterSetName = 'ByGPONameGroupSID', Mandatory)]
-        [Parameter(ParameterSetName = 'ByGPOIdGroupSID', Mandatory)]
-        [System.Security.Principal.SecurityIdentifier]$GroupSID,
-        [Parameter(ParameterSetName = 'ByGPONameGroupUID', Mandatory)]
-        [Parameter(ParameterSetName = 'ByGPOIdGroupUID', Mandatory)]
-        [guid]$GroupUID,
-        [Parameter(ParameterSetName = 'ByGPONameGroupName', Mandatory)]
-        [Parameter(ParameterSetName = 'ByGPONameGroupSID', Mandatory)]
-        [Parameter(ParameterSetName = 'ByGPONameGroupUID', Mandatory)]
-        [string]$GPOName,
-        [Parameter(ParameterSetName = 'ByGPOIdGroupName', Mandatory)]
-        [Parameter(ParameterSetName = 'ByGPOIdGroupSID', Mandatory)]
-        [Parameter(ParameterSetName = 'ByGPOIdGroupUID', Mandatory)]
-        [guid]$GPOId,
-        [Parameter(ParameterSetName = 'ByGPONameGroupName')]
-        [Parameter(ParameterSetName = 'ByGPOIdGroupName')]
-        [Parameter(ParameterSetName = 'ByGPONameGroupSID')]
-        [Parameter(ParameterSetName = 'ByGPOIdGroupSID')]
-        [Parameter(ParameterSetName = 'ByGPONameGroupUID')]
-        [Parameter(ParameterSetName = 'ByGPOIdGroupUID')]
-        [GPPContext]$Context = $ModuleWideDefaultGPPContext
+        [Parameter(ParameterSetName = 'ByGPONameGroupName', Mandatory = $true)]
+        [Parameter(ParameterSetName = 'ByGPOIdGroupName', Mandatory = $true)]
+        [Parameter(ParameterSetName = 'ByGPONameGroupSID', Mandatory = $true)]
+        [Parameter(ParameterSetName = 'ByGPOIdGroupSID', Mandatory = $true)]
+        [Parameter(ParameterSetName = 'ByGPONameGroupUID', Mandatory = $true)]
+        [Parameter(ParameterSetName = 'ByGPOIdGroupUID', Mandatory = $true)]
+        [GPPItemGroupMember]
+        $InputObject,
+
+        [Parameter(ParameterSetName = 'ByGPONameGroupName', Mandatory = $true)]
+        [Parameter(ParameterSetName = 'ByGPOIdGroupName', Mandatory = $true)]
+        [string]
+        $GroupName,
+
+        [Parameter(ParameterSetName = 'ByGPONameGroupSID', Mandatory = $true)]
+        [Parameter(ParameterSetName = 'ByGPOIdGroupSID', Mandatory = $true)]
+        [System.Security.Principal.SecurityIdentifier]
+        $GroupSID,
+
+        [Parameter(ParameterSetName = 'ByGPONameGroupUID', Mandatory = $true)]
+        [Parameter(ParameterSetName = 'ByGPOIdGroupUID', Mandatory = $true)]
+        [guid]
+        $GroupUID,
+
+        [Parameter(ParameterSetName = 'ByGPONameGroupName', Mandatory = $true)]
+        [Parameter(ParameterSetName = 'ByGPONameGroupSID', Mandatory = $true)]
+        [Parameter(ParameterSetName = 'ByGPONameGroupUID', Mandatory = $true)]
+        [string]
+        $GPOName,
+
+        [Parameter(ParameterSetName = 'ByGPOIdGroupName', Mandatory = $true)]
+        [Parameter(ParameterSetName = 'ByGPOIdGroupSID', Mandatory = $true)]
+        [Parameter(ParameterSetName = 'ByGPOIdGroupUID', Mandatory = $true)]
+        [guid]
+        $GPOId,
+
+        [GPPContext]
+        $Context = $ModuleWideDefaultGPPContext,
+
+        [string]
+        $DomainName
     )
 
     if (-not $GPOId) {
-        $GPOId = Convert-GPONameToID -Name $GPOName
+        if ($DomainName) {
+            $GPOId = Convert-GPONameToID -Name $GPOName -DomainName $DomainName
+        } else {
+            $GPOId = Convert-GPONameToID -Name $GPOName
+        }
     }
 
-    $GroupsSection = Get-GPPSection -GPOId $GPOId -Context $Context -Type ([GPPType]::Groups)
-    if ($GroupsSection) {
-        $GetGPPGroupParameters = @{
-            GPPSection = $GroupsSection
-        }
+    $groupsSection = Get-GPPSection -GPOId $GPOId -Context $Context -Type ([GPPType]::Groups) -DomainName $DomainName
 
+    if ($groupsSection) {
+        $paramGetGPPGroup = @{
+            GPPSection = $groupsSection
+        }
         if ($GroupUID) {
-            $GetGPPGroupParameters.Add('UID', $GroupUID)
+            $paramGetGPPGroup.Add('UID', $GroupUID)
+        } elseif ($GroupSID) {
+            $paramGetGPPGroup.Add('SID', $GroupSID)
+        } else {
+            $paramGetGPPGroup.Add('LiteralName', $GroupName)
         }
-        elseif ($GroupSID) {
-            $GetGPPGroupParameters.Add('SID', $GroupSID)
-        }
-        else {
-            $GetGPPGroupParameters.Add('LiteralName', $GroupName)
-        }
+        if ($DomainName) { $paramGetGPPGroup.Add('DomainName', $DomainName) }
 
-        $FilteredGroups = Get-GPPGroup @GetGPPGroupParameters
+        $filteredGroups = Get-GPPGroup @paramGetGPPGroup
 
-        if ($FilteredGroups) {
-            foreach ($FilteredGroup in $FilteredGroups) {
-                if ($FilteredGroup.Properties.Members) {
-                    $FilteredGroup.Properties.Members.Add($InputObject)
-                }
-                else {
-                    $FilteredGroup.Properties.Members = $InputObject
+        if ($filteredGroups) {
+            foreach ($filteredGroup in $filteredGroups) {
+                if ($filteredGroup.Properties.Members) {
+                    $filteredGroup.Properties.Members.Add($InputObject)
+                } else {
+                    $filteredGroup.Properties.Members = $InputObject
                 }
             }
         }
     }
 
-    Set-GPPSection -InputObject $GroupsSection -GPOId $GPOId -Context $Context -Type ([GPPType]::Groups)
+    if ($DomainName) {
+        Set-GPPSection -InputObject $groupsSection -GPOId $GPOId -Context $Context -Type ([GPPType]::Groups) -DomainName $DomainName
+    } else {
+        Set-GPPSection -InputObject $groupsSection -GPOId $GPOId -Context $Context -Type ([GPPType]::Groups)
+    }
 }

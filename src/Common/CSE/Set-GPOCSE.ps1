@@ -1,12 +1,23 @@
 function Set-GPOCSE {
     Param (
-        [Parameter(Mandatory)]
-        [guid]$Id,
-        [Parameter(Mandatory)]
-        [string]$Value
+        [Parameter(Mandatory = $true)]
+        [guid]
+        $Id,
+
+        [Parameter(Mandatory = $true)]
+        [string]
+        $Value,
+
+        [string]
+        $DomainName
     )
 
-    $GPO = Get-GPOObject -Id $Id
-    $GPO.InvokeSet('gPCMachineExtensionNames', $Value)
-    $GPO.CommitChanges()
+    if ($DomainName) {
+        $gpo = Get-GPOObject -Id $Id -DomainName $DomainName
+    } else {
+        $gpo = Get-GPOObject -Id $Id
+    }
+
+    $gpo.InvokeSet('gPCMachineExtensionNames', $Value)
+    $gpo.CommitChanges()
 }
