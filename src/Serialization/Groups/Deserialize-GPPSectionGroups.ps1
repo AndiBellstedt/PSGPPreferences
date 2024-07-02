@@ -4,7 +4,7 @@ function Deserialize-GPPSectionGroups {
         [System.Xml.XmlElement]$InputObject
     )
 
-    $GroupsMembers = [System.Collections.Generic.List[GPPItemGroupsSection]]::new()
+    $GroupsMembers = [System.Collections.ArrayList]::new()
 
     foreach ($ChildNode in $InputObject.ChildNodes) {
         $GPPItemPropertiesElement = $ChildNode.Properties
@@ -18,8 +18,7 @@ function Deserialize-GPPSectionGroups {
 
         $Disabled = if ($ChildNode.disabled -eq 1) {
             $true
-        }
-        else {
+        } else {
             $false
         }
 
@@ -29,64 +28,56 @@ function Deserialize-GPPSectionGroups {
 
                 $Members = $null
                 if ($GPPItemGroupMembersElement) {
-                    $Members = [System.Collections.Generic.List[GPPItemGroupMember]]::new()
+                    $Members = [System.Collections.ArrayList]::new()
                     foreach ($Item in $GPPItemGroupMembersElement) {
                         if ($Item.sid) {
-                            $Members.Add([GPPItemGroupMember]::new($Item.action, $Item.name, $Item.sid))
-                        }
-                        else {
-                            $Members.Add([GPPItemGroupMember]::new($Item.action, $Item.name))
+                            $null = $Members.Add([GPPItemGroupMember]::new($Item.action, $Item.name, $Item.sid))
+                        } else {
+                            $null = $Members.Add([GPPItemGroupMember]::new($Item.action, $Item.name))
                         }
                     }
                 }
 
                 $DeleteAllUsers = if ($GPPItemPropertiesElement.deleteAllUsers -eq 1) {
                     $true
-                }
-                else {
+                } else {
                     $false
                 }
                 $DeleteAllGroups = if ($GPPItemPropertiesElement.deleteAllGroups -eq 1) {
                     $true
-                }
-                else {
+                } else {
                     $false
                 }
 
                 $GPPItemPropertiesGroup = [GPPItemPropertiesGroup]::new($GPPItemPropertiesElement.action, $GPPItemPropertiesElement.groupName, $GPPItemPropertiesElement.groupSid, $GPPItemPropertiesElement.newName, $GPPItemPropertiesElement.description, $Members, $DeleteAllUsers, $DeleteAllGroups)
 
-                $GroupsMembers.Add([GPPItemGroup]::new($GPPItemPropertiesGroup, [guid]$ChildNode.uid, $Disabled, $ChildNode.name, $GPPItemFiltersElement))
+                $null = $GroupsMembers.Add([GPPItemGroup]::new($GPPItemPropertiesGroup, [guid]$ChildNode.uid, $Disabled, $ChildNode.name, $GPPItemFiltersElement))
             }
             'User' {
                 $UserMustChangePassword = if ($GPPItemPropertiesElement.changeLogon -eq 1) {
                     $true
-                }
-                else {
+                } else {
                     $false
                 }
                 $UserMayNotChangePassword = if ($GPPItemPropertiesElement.noChange -eq 1) {
                     $true
-                }
-                else {
+                } else {
                     $false
                 }
                 $PasswordNeverExpires = if ($GPPItemPropertiesElement.neverExpires -eq 1) {
                     $true
-                }
-                else {
+                } else {
                     $false
                 }
                 $AccountDisabled = if ($GPPItemPropertiesElement.acctDisabled -eq 1) {
                     $true
-                }
-                else {
+                } else {
                     $false
                 }
 
                 if ($GPPItemPropertiesElement.subAuthority) {
                     [GPPItemUserSubAuthority]$BuiltInUser = $GPPItemPropertiesElement.subAuthority
-                }
-                else {
+                } else {
                     if ($null -ne $BuiltInUser) {
                         # When in the XML-file, we have a built-in user item and then a regular user item, the $BuiltInUser variable will still have its value when processing the regular user.
                         # This confuses the constructor. And we cannot use $BuiltInUser = $null, because the type of this variable does not allow that.
@@ -96,12 +87,11 @@ function Deserialize-GPPSectionGroups {
 
                 $GPPItemPropertiesUser = if ($UserMustChangePassword) {
                     [GPPItemPropertiesUser]::new($GPPItemPropertiesElement.action, $BuiltInUser, $GPPItemPropertiesElement.userName, $GPPItemPropertiesElement.newName, $GPPItemPropertiesElement.fullName, $GPPItemPropertiesElement.description, $UserMustChangePassword, $AccountDisabled, $GPPItemPropertiesElement.expires)
-                }
-                else {
+                } else {
                     [GPPItemPropertiesUser]::new($GPPItemPropertiesElement.action, $BuiltInUser, $GPPItemPropertiesElement.userName, $GPPItemPropertiesElement.newName, $GPPItemPropertiesElement.fullName, $GPPItemPropertiesElement.description, $UserMayNotChangePassword, $PasswordNeverExpires, $AccountDisabled, $GPPItemPropertiesElement.expires)
                 }
 
-                $GroupsMembers.Add([GPPItemUser]::new($GPPItemPropertiesUser, [guid]$ChildNode.uid, $Disabled, $ChildNode.name, $GPPItemFiltersElement))
+                $null = $GroupsMembers.Add([GPPItemUser]::new($GPPItemPropertiesUser, [guid]$ChildNode.uid, $Disabled, $ChildNode.name, $GPPItemFiltersElement))
             }
         }
     }
@@ -113,8 +103,7 @@ function Deserialize-GPPSectionGroups {
     # But implicit type convertion works well with string -> int
     $SectionDisabled = if ($InputObject.disabled -eq 1) {
         $true
-    }
-    else {
+    } else {
         $false
     }
     [GPPSectionGroups]::new($GroupsMembers, $SectionDisabled)
