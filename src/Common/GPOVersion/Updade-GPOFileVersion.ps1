@@ -19,10 +19,10 @@ function Update-GPOFileVersion {
     } else {
         $domain = [System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain()
     }
-    $domainDnsName = $domain.Name
+    $dc = $domain.PdcRoleOwner.Name
 
     $idFormatted = $Id.ToString('B')
-    $gpoFSPath = '\\{0}\SYSVOL\{0}\Policies\{1}' -f $domainDnsName, $idFormatted
+    $gpoFSPath = '\\{0}\SYSVOL\{1}\Policies\{2}' -f $dc, $domain, $idFormatted
     $gptIniPath = Join-Path -Path $gpoFSPath -ChildPath 'GPT.INI'
     $fileContent = "[General]`nVersion={0}" -f $Version # GPO AD DS version is more important than the version in the file
 
